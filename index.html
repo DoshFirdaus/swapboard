@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F3FD1">
+<title>Swapboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --ink:#151B2E; --muted:#5B6479; --line:#D6DCE6;
+  --blue:#1F3FD1; --blue-ink:#FFFFFF; --tag:#FFD43B; --tag-ink:#151B2E; --danger:#B42318; --ok:#1B7F4B;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#10141F; --surface:#1A2030; --ink:#E8ECF4; --muted:#9AA3B8; --line:#2A3244;
+         --blue:#7D92FF; --blue-ink:#0E1330; --danger:#FF8A80; --ok:#6FD39B; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+a{color:var(--blue)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:960px;margin:0 auto}
+.brand{font:800 26px/1 var(--display);letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+h1,h2{font-family:var(--display);letter-spacing:-.015em;margin:.2em 0 .5em}
+h1{font-size:28px;font-weight:800} h2{font-size:21px;font-weight:700}
+.muted{color:var(--muted)} .small{font-size:14px}
+.row{display:flex;gap:8px;align-items:center}
+.stack>*+*{margin-top:12px}
+input,select,textarea{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+textarea{min-height:120px;resize:vertical}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:6px;padding:12px 18px;border-radius:999px;border:0;background:var(--blue);color:var(--blue-ink);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.danger{background:transparent;color:var(--danger);border:1.5px solid currentColor}
+.btn[disabled]{opacity:.55;cursor:wait}
+.btn.block{width:100%}
+.search{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:16px}
+.search select{width:auto}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{position:relative;display:block;background:var(--surface);border-radius:14px;overflow:hidden;text-decoration:none;color:inherit;border:1px solid var(--line)}
+.card .ph{aspect-ratio:1;background:var(--line);display:block;width:100%;object-fit:cover}
+.card .meta{padding:10px 12px 12px}
+.card .t{font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* The price tag: the one bold element */
+.tag{position:absolute;top:10px;left:0;background:var(--tag);color:var(--tag-ink);font:800 16px/1 var(--display);padding:7px 12px 7px 20px;
+  clip-path:polygon(10px 0,100% 0,100% 100%,10px 100%,0 50%);}
+.tag::before{content:"";position:absolute;left:9px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:var(--surface)}
+.tag.big{position:relative;top:0;display:inline-block;font-size:26px;padding:10px 16px 10px 26px;clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%)}
+.tag.big::before{left:12px;width:7px;height:7px;margin-top:-3.5px}
+.sold{position:absolute;top:10px;right:10px;background:var(--ink);color:var(--bg);font-weight:700;font-size:13px;padding:4px 10px;border-radius:999px}
+.gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;border-radius:14px}
+.gallery img{flex:0 0 100%;aspect-ratio:1;object-fit:cover;scroll-snap-align:start;border-radius:14px;background:var(--line)}
+@media(min-width:640px){.gallery img{flex-basis:70%}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.notice{border-left:4px solid var(--tag);padding:10px 14px;background:var(--surface);border-radius:8px;font-size:14px}
+.empty{text-align:center;padding:48px 16px}
+.list a{display:flex;gap:12px;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit;margin-bottom:8px}
+.list img,.list .noimg{width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--line);flex:none}
+.chat{display:flex;flex-direction:column;gap:6px;min-height:40vh;max-height:60vh;overflow-y:auto;padding:8px 0}
+.msg{max-width:78%;padding:9px 13px;border-radius:16px;background:var(--surface);border:1px solid var(--line);white-space:pre-wrap;word-wrap:break-word}
+.msg.me{align-self:flex-end;background:var(--blue);color:var(--blue-ink);border-color:transparent}
+.msg time{display:block;font-size:11px;opacity:.7;margin-top:2px}
+.composer{display:grid;grid-template-columns:1fr auto;gap:8px;position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));background:var(--bg);padding:8px 0}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumbs img{width:72px;height:72px;object-fit:cover;border-radius:10px}
+nav.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav.bar a{display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600}
+nav.bar a svg{width:24px;height:24px;margin-bottom:2px}
+nav.bar a.on{color:var(--blue)}
+nav.bar a.sell svg{background:var(--tag);color:var(--tag-ink);border-radius:50%;padding:3px;width:30px;height:30px;margin-top:-4px}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:10;max-width:90vw}
+.err{color:var(--danger);font-size:14px}
+@media (prefers-reduced-motion: no-preference){ .toast{animation:pop .2s ease-out} @keyframes pop{from{opacity:0;transform:translate(-50%,8px)}} }
+</style>
+</head>
+<body>
+<header class="top"><a class="brand" href="#/">Swapboard</a><span id="who" class="small muted"></span></header>
+<main class="wrap" id="app"><p class="muted">Loading…</p></main>
+<nav class="bar" id="nav">
+  <a href="#/" data-r="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Browse</a>
+  <a href="#/new" data-r="new" class="sell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 6v12M6 12h12"/></svg>Sell</a>
+  <a href="#/inbox" data-r="inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg>Chats</a>
+  <a href="#/mine" data-r="mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Me</a>
+</nav>
+
+<script>
+// ===== 1. PASTE YOUR SUPABASE DETAILS HERE =====
+const SUPABASE_URL = "https://nfscwoioempfclmdgkik.supabase.co";
+const SUPABASE_KEY = "sb_publishable_v69vcpMhmU6Ok_85sVEv2Q_eJQ_ZMfI";
+// ===== Optional settings =====
+const CATEGORIES = ["Electronics","Furniture","Fashion","Home & living","Books","Sports","Toys & kids","Hobbies","Other"];
+const CURRENCY = "S$";
+const BUCKET = "listing-images";
+
+const app = document.getElementById("app");
+let sb = null, session = null, myName = "", chatChannel = null;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => CURRENCY + Number(n).toLocaleString("en-SG", {minimumFractionDigits: Number(n) % 1 ? 2 : 0, maximumFractionDigits: 2});
+const imgUrl = path => sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+const me = () => session?.user?.id;
+function ago(ts){
+  const s = (Date.now() - new Date(ts)) / 1000;
+  if (s < 60) return "just now";
+  const units = [[86400*30,"mo"],[86400,"d"],[3600,"h"],[60,"m"]];
+  for (const [n,u] of units) if (s >= n) return Math.floor(s/n) + u + " ago";
+}
+function toast(msg){
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function needLogin(){ if (!me()) { location.hash = "#/login?next=" + encodeURIComponent(location.hash); return true; } return false; }
+function busy(btn, on, label){ btn.disabled = on; if (label) btn.textContent = label; }
+
+// ===== Router =====
+async function route(){
+  if (chatChannel) { sb.removeChannel(chatChannel); chatChannel = null; }
+  const [path, query] = (location.hash.slice(1) || "/").split("?");
+  const params = new URLSearchParams(query || "");
+  const parts = path.split("/").filter(Boolean);
+  document.querySelectorAll("nav.bar a").forEach(a => a.classList.toggle("on", a.dataset.r === (parts[0] || "browse")));
+  document.getElementById("who").textContent = me() ? "Hi, " + myName : "";
+  window.scrollTo(0, 0);
+  try {
+    if (!parts.length) return browse(params);
+    if (parts[0] === "listing") return listing(parts[1]);
+    if (parts[0] === "new") return needLogin() || newListing();
+    if (parts[0] === "inbox") return needLogin() || inbox();
+    if (parts[0] === "chat") return needLogin() || chat(parts[1]);
+    if (parts[0] === "mine") return needLogin() || mine();
+    if (parts[0] === "login") return login(params);
+    app.innerHTML = `<div class="empty"><h2>Page not found</h2><a class="btn" href="#/">Browse listings</a></div>`;
+  } catch (e) {
+    console.error(e);
+    app.innerHTML = `<div class="empty"><h2>Couldn't load this page</h2><p class="muted">${esc(e.message)}</p><a class="btn" href="#/">Back to listings</a></div>`;
+  }
+}
+
+// ===== Browse =====
+async function browse(params){
+  const q = params.get("q") || "", cat = params.get("cat") || "";
+  app.innerHTML = `
+    <form class="search" id="sf">
+      <input name="q" type="search" placeholder="Search listings" value="${esc(q)}" aria-label="Search listings">
+      <select name="cat" aria-label="Category"><option value="">All</option>${CATEGORIES.map(c => `<option ${c===cat?"selected":""}>${esc(c)}</option>`).join("")}</select>
+    </form>
+    <div id="res"><p class="muted">Loading listings…</p></div>`;
+  const f = document.getElementById("sf");
+  const go = () => { const p = new URLSearchParams(); if (f.q.value.trim()) p.set("q", f.q.value.trim()); if (f.cat.value) p.set("cat", f.cat.value); location.hash = "#/" + (p.toString() ? "?" + p : ""); };
+  f.onsubmit = e => { e.preventDefault(); go(); };
+  f.cat.onchange = go;
+
+  let req = sb.from("listings").select("id,title,price,area,images,created_at").eq("status","available").order("created_at",{ascending:false}).limit(60);
+  const safe = q.replace(/[,()%*\\]/g, " ").trim();
+  if (safe) req = req.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`);
+  if (cat) req = req.eq("category", cat);
+  const { data, error } = await req;
+  if (error) throw error;
+  const res = document.getElementById("res");
+  if (!data.length) {
+    res.innerHTML = `<div class="empty"><h2>${q || cat ? "No matches" : "Nothing listed yet"}</h2><p class="muted">${q || cat ? "Try a different word or category." : "Be the first to sell something."}</p><a class="btn" href="#/new">List an item</a></div>`;
+    return;
+  }
+  res.innerHTML = `<div class="grid">${data.map(cardHtml).join("")}</div>`;
+}
+function cardHtml(l){
+  const img = l.images?.[0] ? `<img class="ph" loading="lazy" alt="" src="${esc(imgUrl(l.images[0]))}">` : `<span class="ph"></span>`;
+  return `<a class="card" href="#/listing/${l.id}">${img}<span class="tag">${esc(money(l.price))}</span>${l.status==="sold"?`<span class="sold">Sold</span>`:""}
+    <div class="meta"><div class="t">${esc(l.title)}</div><div class="small muted">${esc(l.area || "")}${l.area?", ":""}${ago(l.created_at)}</div></div></a>`;
+}
+
+// ===== Listing detail =====
+async function listing(id){
+  const { data: l, error } = await sb.from("listings").select("*, profiles(display_name)").eq("id", id).maybeSingle();
+  if (error) throw error;
+  if (!l) { app.innerHTML = `<div class="empty"><h2>This listing was removed</h2><a class="btn" href="#/">Browse listings</a></div>`; return; }
+  const mine = me() === l.seller_id;
+  app.innerHTML = `
+    <div class="stack">
+      ${l.images.length ? `<div class="gallery">${l.images.map(p => `<img alt="" src="${esc(imgUrl(p))}">`).join("")}</div>` : ""}
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="tag big">${esc(money(l.price))}</span>${l.status==="sold"?`<strong class="muted">Sold</strong>`:""}</div>
+      <h1>${esc(l.title)}</h1>
+      <p class="muted small">${esc(l.category)}${l.area ? ", " + esc(l.area) : ""}. Listed ${ago(l.created_at)} by ${esc(l.profiles?.display_name || "a seller")}</p>
+      ${l.description ? `<div class="panel" style="white-space:pre-wrap">${esc(l.description)}</div>` : ""}
+      <div id="act"></div>
+      <p class="notice">Meet in a public place, check the item, and pay on collection. Never pay a deposit to someone you haven't met.</p>
+      ${!mine ? `<button class="btn ghost small" id="rep">Report this listing</button>` : ""}
+    </div>`;
+  const act = document.getElementById("act");
+  if (mine) {
+    act.innerHTML = `<div class="row"><button class="btn ghost" id="tog">${l.status==="sold"?"Mark as available":"Mark as sold"}</button><button class="btn danger" id="del">Delete</button></div>`;
+    document.getElementById("tog").onclick = async e => {
+      busy(e.target, true);
+      const { error } = await sb.from("listings").update({ status: l.status === "sold" ? "available" : "sold" }).eq("id", id);
+      if (error) { toast(error.message); busy(e.target, false); return; }
+      toast(l.status === "sold" ? "Marked as available" : "Marked as sold"); route();
+    };
+    document.getElementById("del").onclick = () => deleteListing(l);
+  } else if (l.status === "available") {
+    act.innerHTML = `<button class="btn block" id="msg">Message seller</button>`;
+    document.getElementById("msg").onclick = e => startChat(l, e.target);
+  }
+  const rep = document.getElementById("rep");
+  if (rep) rep.onclick = async () => {
+    if (needLogin()) return;
+    const reason = prompt("What's wrong with this listing? (e.g. scam, prohibited item, offensive)");
+    if (!reason || !reason.trim()) return;
+    const { error } = await sb.from("reports").insert({ listing_id: id, reason: reason.trim().slice(0, 500) });
+    toast(error ? error.message : "Report sent. Thanks.");
+  };
+}
+async function deleteListing(l){
+  if (!confirm("Delete this listing? This can't be undone.")) return;
+  if (l.images.length) await sb.storage.from(BUCKET).remove(l.images);
+  const { error } = await sb.from("listings").delete().eq("id", l.id);
+  if (error) return toast(error.message);
+  toast("Listing deleted"); location.hash = "#/mine";
+}
+async function startChat(l, btn){
+  if (needLogin()) return;
+  busy(btn, true, "Opening chat…");
+  let { data: c } = await sb.from("conversations").select("id").eq("listing_id", l.id).eq("buyer_id", me()).maybeSingle();
+  if (!c) {
+    const r = await sb.from("conversations").insert({ listing_id: l.id, buyer_id: me(), seller_id: l.seller_id }).select("id").single();
+    if (r.error) { toast(r.error.message); busy(btn, false, "Message seller"); return; }
+    c = r.data;
+  }
+  location.hash = "#/chat/" + c.id;
+}
+
+// ===== New listing =====
+async function compress(file){
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(bmp.width * scale); cv.height = Math.round(bmp.height * scale);
+  cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+  return new Promise((ok, bad) => cv.toBlob(b => b ? ok(b) : bad(new Error("Couldn't process photo")), "image/jpeg", 0.82));
+}
+function newListing(){
+  app.innerHTML = `
+    <h1>Sell something</h1>
+    <form id="nf" class="stack">
+      <div><label for="ph">Photos (up to 5)</label><input id="ph" type="file" accept="image/*" multiple><div class="thumbs" id="th" style="margin-top:8px"></div></div>
+      <div><label for="ti">Title</label><input id="ti" required minlength="3" maxlength="80" placeholder="e.g. IKEA study desk, white"></div>
+      <div><label for="pr">Price (${CURRENCY})</label><input id="pr" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0 for free"></div>
+      <div><label for="ca">Category</label><select id="ca">${CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("")}</select></div>
+      <div><label for="ar">Area for meet-up</label><input id="ar" maxlength="60" placeholder="e.g. Tampines MRT"></div>
+      <div><label for="de">Description</label><textarea id="de" maxlength="2000" placeholder="Condition, size, reason for selling"></textarea></div>
+      <p class="err" id="er"></p>
+      <button class="btn block" id="sb">Publish listing</button>
+    </form>`;
+  let files = [];
+  const ph = document.getElementById("ph"), th = document.getElementById("th"), er = document.getElementById("er");
+  ph.onchange = () => {
+    files = [...ph.files].slice(0, 5);
+    if (ph.files.length > 5) er.textContent = "Only the first 5 photos will be used.";
+    th.innerHTML = files.map(f => `<img alt="" src="${URL.createObjectURL(f)}">`).join("");
+  };
+  document.getElementById("nf").onsubmit = async e => {
+    e.preventDefault(); er.textContent = "";
+    const btn = document.getElementById("sb"); busy(btn, true, "Uploading photos…");
+    const paths = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const blob = await compress(files[i]);
+        const path = `${me()}/${Date.now()}-${i}.jpg`;
+        const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg" });
+        if (error) throw error;
+        paths.push(path);
+      }
+      busy(btn, true, "Publishing…");
+      const { data, error } = await sb.from("listings").insert({
+        title: document.getElementById("ti").value.trim(),
+        price: Number(document.getElementById("pr").value),
+        category: document.getElementById("ca").value,
+        area: document.getElementById("ar").value.trim(),
+        description: document.getElementById("de").value.trim(),
+        images: paths
+      }).select("id").single();
+      if (error) throw error;
+      toast("Listing published"); location.hash = "#/listing/" + data.id;
+    } catch (err) {
+      if (paths.length) await sb.storage.from(BUCKET).remove(paths);
+      er.textContent = "Couldn't publish: " + err.message;
+      busy(btn, false, "Publish listing");
+    }
+  };
+}
+
+// ===== Inbox =====
+async function inbox(){
+  const { data, error } = await sb.from("conversations")
+    .select("id,buyer_id,seller_id,last_message_at, listings(title,images), buyer:profiles!conversations_buyer_id_fkey(display_name), seller:profiles!conversations_seller_id_fkey(display_name)")
+    .order("last_message_at", { ascending: false });
+  if (error) throw error;
+  if (!data.length) { app.innerHTML = `<h1>Chats</h1><div class="empty"><p class="muted">No chats yet. Find something you like and message the seller.</p><a class="btn" href="#/">Browse listings</a></div>`; return; }
+  app.
