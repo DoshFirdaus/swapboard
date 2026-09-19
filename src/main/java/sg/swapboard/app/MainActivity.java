@@ -14,7 +14,7 @@ import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
 
-    private static final String APP_URL = "https://doshfirdaus.github.io/swapboard/";
+    private static final String APP_URL = "https://kakimart.sg/";
 
     private static final int PICK_PHOTOS = 1001;
     private WebView web;
