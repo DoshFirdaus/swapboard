@@ -81,6 +81,7 @@ public class MainActivity extends Activity {
         w.setNavigationBarColor(Color.TRANSPARENT);
         if (Build.VERSION.SDK_INT >= 30) {
             w.setDecorFitsSystemWindows(false);
+            w.getDecorView(); // make sure the window is created first (fixes crash on Samsung)
             WindowInsetsController c = w.getInsetsController();
             if (c != null) {
                 int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
