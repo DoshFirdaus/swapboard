@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "177996865621",
+    "project_id": "kakimart-a1b2c",
+    "storage_bucket": "kakimart-a1b2c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:177996865621:android:6de28ce017a327b4a7b4dc",
+        "android_client_info": {
+          "package_name": "sg.kakimart.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDo9owP2gltpq74cgz13zgOxGUOT7VHoOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
